@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  SUPERVISOR
+}
+
+enum WorkerRole {
+  SPINNER
+  OPERATOR
+  SUPERVISOR
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(ADMIN)
+  createdAt DateTime @default(now())
+}
+
+model Worker {
+  id          String       @id @default(uuid())
+  name        String
+  workerCode  String       @unique
+  role        WorkerRole   @default(SPINNER)
+  email       String?
+  joiningDate DateTime
+  createdAt   DateTime     @default(now())
+  attendance  Attendance[]
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  workerId  String
+  date      DateTime
+  status    String
+  markedBy  String
+  createdAt DateTime @default(now())
+  worker    Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, date])
+}
+
+model InventoryItem {
+  id        String         @id @default(uuid())
+  name      String
+  sku       String         @unique
+  quantity  Int
+  createdAt DateTime       @default(now())
+  logs      InventoryLog[]
+}
+
+model InventoryLog {
+  id        String        @id @default(uuid())
+  itemId    String
+  change    Int
+  type      String
+  updatedBy String
+  createdAt DateTime      @default(now())
+  item      InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id           String     @id @default(uuid())
+  referenceId  String     @unique
+  customerName String
+  product      String
+  quantity     Int
+  status       String
+  createdAt    DateTime   @default(now())
+  logs         OrderLog[]
+}
+
+model OrderLog {
+  id        String   @id @default(uuid())
+  orderId   String
+  status    String
+  updatedBy String
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Inquiry {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
